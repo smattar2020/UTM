@@ -37,7 +37,7 @@ struct ContentView: View {
         NavigationView {
             List {
                 NavigationLink(destination: VMPlaceholderView()) {
-                    CardView(title: "Home", subtitle: "u", systemImage: "house")
+                    CardView(title: "Home", subtitle: "Welcome to UTM", systemImage: "house")
                 }
                 NavigationLink(destination: CompatibleUTMTemplates()) {
                     CardView(title: "Browse UTM Templates", subtitle: "Prebuilt VMs", systemImage: "arrow.down.app")
