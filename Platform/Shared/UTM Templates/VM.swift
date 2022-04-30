@@ -22,7 +22,7 @@ struct VMAttribute: Identifiable {
     let id = UUID()
 }
 
-struct VirtualMachine: Identifiable {
+class VirtualMachine: Identifiable {
     var id: UUID
     
     var title: String
@@ -43,12 +43,16 @@ struct VirtualMachine: Identifiable {
         calc_vm_size()
     }
     
-    mutating func calc_vm_size() {
-        if let url = URL(string: link) {
-            if let data = try? Data(contentsOf: url) {
-                if let json = try? JSONSerialization.jsonObject(with: data) as? [String:Any] {
-                    if let size = json["size"] as? Int {
-                        attributes.append(VMAttribute(key: "Compressed Size", value: humanReadableByteCount(bytes: size)))
+    func calc_vm_size() {
+        DispatchQueue.global().async { [self] in
+            if let url = URL(string: link) {
+                if let data = try? Data(contentsOf: url) {
+                    if let json = try? JSONSerialization.jsonObject(with: data) as? [String:Any] {
+                        if let size = json["size"] as? Int {
+                            DispatchQueue.main.async { [self] in
+                                attributes.append(VMAttribute(key: "Compressed Size", value: humanReadableByteCount(bytes: size)))
+                            }
+                        }
                     }
                 }
             }
