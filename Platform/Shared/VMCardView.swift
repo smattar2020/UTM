@@ -73,13 +73,17 @@ struct CardView: View {
     typealias PlatformImage = UIImage
     #endif
     
+    var title: String
+    var subtitle: String
+    var systemImage: String
+    
     var body: some View {
         HStack {
-            Logo(logo: PlatformImage(systemSymbolName: "arrow.down.app", accessibilityDescription: nil)!)
+            Logo(logo: PlatformImage(systemSymbolName: systemImage, accessibilityDescription: nil)!)
             VStack(alignment: .leading) {
-                Text("Browse UTM Templates")
+                Text(title)
                     .font(.headline)
-                Text("Prebuilt templates for UTM")
+                Text(subtitle)
                     .font(.subheadline)
             }.lineLimit(1)
             .truncationMode(.tail)

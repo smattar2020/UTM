@@ -36,8 +36,11 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             List {
+                NavigationLink(destination: VMPlaceholderView()) {
+                    CardView(title: "Home", subtitle: "u", systemImage: "house")
+                }
                 NavigationLink(destination: CompatibleUTMTemplates()) {
-                    CardView()
+                    CardView(title: "Browse UTM Templates", subtitle: "Prebuilt VMs", systemImage: "arrow.down.app")
                 }
                 Divider()
                 ForEach(data.virtualMachines) { vm in
