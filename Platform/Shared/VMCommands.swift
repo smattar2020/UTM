@@ -26,6 +26,9 @@ struct VMCommands: Commands {
             Button(action: { NotificationCenter.default.post(name: NSNotification.NewVirtualMachine, object: nil) }, label: {
                 Text("New...")
             }).keyboardShortcut(KeyEquivalent("n"))
+            Button(action: { NotificationCenter.default.post(name: NSNotification.NewVirtualMachineGroup, object: nil) }, label: {
+                Text("New Group...")
+            }).keyboardShortcut(KeyEquivalent("N"))
             Button(action: { NotificationCenter.default.post(name: NSNotification.OpenVirtualMachine, object: nil) }, label: {
                 Text("Open...")
             }).keyboardShortcut(KeyEquivalent("o"))
@@ -52,5 +55,6 @@ struct VMCommands: Commands {
 
 extension NSNotification {
     static let NewVirtualMachine = NSNotification.Name("NewVirtualMachine")
+    static let NewVirtualMachineGroup = NSNotification.Name("NewVirtualMachineGroup")
     static let OpenVirtualMachine = NSNotification.Name("OpenVirtualMachine")
 }
