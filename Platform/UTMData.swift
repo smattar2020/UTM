@@ -72,6 +72,9 @@ class UTMData: ObservableObject {
     /// Temporary storage for QEMU removable drives settings
     private var qemuRemovableDrivesCache: [String: URL]
     
+    /// Temporary storage for QEMU imported and created drives that haven't been saved yet
+    private var qemuUnsavedImages: [URL]
+    
     #if os(macOS)
     /// View controller for every VM currently active
     var vmWindows: [UTMVirtualMachine: VMDisplayWindowController] = [:]
@@ -101,6 +104,7 @@ class UTMData: ObservableObject {
         self.busy = false
         self.virtualMachines = []
         self.qemuRemovableDrivesCache = [:]
+        self.qemuUnsavedImages = []
         self.pendingVMs = []
         self.selectedVM = nil
         listLoadFromDefaults()
@@ -327,6 +331,27 @@ class UTMData: ObservableObject {
         return UUID().uuidString
     }
     
+    /// Generate a filename for an imported file, avoiding duplicate names
+    /// - Parameters:
+    ///   - imagesUrl: Destination directory to test for file existance
+    ///   - filename: The filename of the existing image being imported
+    ///   - withExtension: Optionally change the file extension
+    /// - Returns: Unique filename that is not used in the imagesUrl
+    func newImportedImage(at imagesUrl: URL, filename: String, withExtension: String? = nil) -> String {
+        let baseUrl = imagesUrl.appendingPathComponent(filename)
+        let name = baseUrl.deletingPathExtension().lastPathComponent
+        let ext = withExtension ?? baseUrl.pathExtension
+        let strFromInt = { (i: Int) in i == 1 ? "" : "-\(i)" }
+        for i in 1..<1000 {
+            let attempt = "\(name)\(strFromInt(i))"
+            let attemptUrl = imagesUrl.appendingPathComponent(attempt).appendingPathExtension(ext)
+            if !fileManager.fileExists(atPath: attemptUrl.path) {
+                return attemptUrl.lastPathComponent
+            }
+        }
+        return UUID().uuidString
+    }
+    
     // MARK: - Other view states
     
     @MainActor private func setBusyIndicator(_ busy: Bool) {
@@ -362,6 +387,7 @@ class UTMData: ObservableObject {
             try await vm.saveUTM()
             if let qemuVM = vm as? UTMQemuVirtualMachine {
                 try commitRemovableDriveImages(for: qemuVM)
+                qemuUnsavedImages.removeAll()
             }
         } catch {
             // refresh the VM object as it is now stale
@@ -400,16 +426,11 @@ class UTMData: ObservableObject {
             // create a tmp empty config so we can get orphanedDrives for tmp path
             config = UTMQemuConfiguration()
         }
-        // delete orphaned drives
-        guard let orphanedDrives = config.orphanedDrives else {
-            return
+        // delete unsaved drives
+        for url in qemuUnsavedImages {
+            try? fileManager.removeItem(at: url)
         }
-        for name in orphanedDrives {
-            let imagesPath = config.imagesPath
-            let orphanPath = imagesPath.appendingPathComponent(name)
-            logger.debug("Removing orphaned drive '\(name)'")
-            try fileManager.removeItem(at: orphanPath)
-        }
+        qemuUnsavedImages.removeAll()
     }
     
     /// Save a new VM to disk
@@ -695,18 +716,17 @@ class UTMData: ObservableObject {
             }
         }
         
-        var path = drive.lastPathComponent
         let imagesPath = config.imagesPath
-        var dstPath = imagesPath.appendingPathComponent(path)
+        var filename = newImportedImage(at: imagesPath, filename: drive.lastPathComponent)
+        var dstPath = imagesPath.appendingPathComponent(filename)
         if !fileManager.fileExists(atPath: imagesPath.path) {
             try fileManager.createDirectory(at: imagesPath, withIntermediateDirectories: false, attributes: nil)
         }
         if copy {
             #if os(macOS)
             if !raw {
-                dstPath.deletePathExtension()
-                dstPath.appendPathExtension("qcow2")
-                path = dstPath.lastPathComponent
+                filename = newImportedImage(at: imagesPath, filename: drive.lastPathComponent, withExtension: "qcow2")
+                dstPath = imagesPath.appendingPathComponent(filename)
                 try await UTMQemuImage.convert(from: drive, toQcow2: dstPath)
             } else {
                 try fileManager.copyItem(at: drive, to: dstPath)
@@ -718,7 +738,8 @@ class UTMData: ObservableObject {
         } else {
             try fileManager.moveItem(at: drive, to: dstPath)
         }
-        let newPath = path
+        qemuUnsavedImages.append(dstPath)
+        let newPath = filename
         await MainActor.run {
             let name = self.newDefaultDriveName(for: config)
             config.newDrive(name, path: newPath, type: imageType, interface: interface)
@@ -763,6 +784,8 @@ class UTMData: ObservableObject {
                     throw NSLocalizedString("Disk creation failed.", comment: "UTMData")
                 }
             }.value
+            
+            qemuUnsavedImages.append(dstPath)
         }
         
         let name = self.newDefaultDriveName(for: config)
@@ -787,6 +810,7 @@ class UTMData: ObservableObject {
     func removeDrive(at index: Int, for config: UTMQemuConfiguration) async throws {
         if let path = config.driveImagePath(for: index) {
             let fullPath = config.imagesPath.appendingPathComponent(path);
+            qemuUnsavedImages.removeAll(where: { $0 == fullPath })
             if fileManager.fileExists(atPath: fullPath.path) {
                 try fileManager.removeItem(at: fullPath)
             }
