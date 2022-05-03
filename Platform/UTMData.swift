@@ -576,6 +576,17 @@ class UTMData: ObservableObject {
         return total
     }
     
+    /// Calculate size of a single file URL
+    /// - Parameter url: File URL
+    /// - Returns: Size in bytes
+    func computeSize(for url: URL) -> Int64 {
+        if let resourceValues = try? url.resourceValues(forKeys: [.totalFileSizeKey]), let size = resourceValues.totalFileSize {
+            return Int64(size)
+        } else {
+            return 0
+        }
+    }
+    
     /// Handles UTM file URLs
     ///
     /// If .utm is already in the list, select it
@@ -669,9 +680,15 @@ class UTMData: ObservableObject {
     /// - Parameter components: Download URL components
     @MainActor func downloadUTMZip(from components: URLComponents) {
         guard let urlParameter = components.queryItems?.first(where: { $0.name == "url" })?.value,
+<<<<<<< HEAD
            let url = URL(string: urlParameter)
         else {
             return
+=======
+           let url = URL(string: urlParameter) else {
+               showErrorAlert(message: NSLocalizedString("Failed to parse download URL.", comment: "UTMData"))
+               return
+>>>>>>> f6841ebd0cb3f6bd2f10bdcc7728856f56e972b9
         }
         let task = UTMDownloadVMTask(for: url)
         listAdd(pendingVM: task.pendingVM)
@@ -855,6 +872,28 @@ class UTMData: ObservableObject {
         try handle.truncate(atOffset: UInt64(sizeInMib * bytesInMib))
         try handle.close()
     }
+    
+    #if os(macOS)
+    /// Reclaim empty space in a file by (re)-converting it to QCOW2
+    ///
+    /// This will overwrite driveUrl with the converted file on success!
+    /// - Parameter driveUrl: Original drive to convert
+    /// - Parameter isCompressed: Compress existing data
+    func reclaimSpace(for driveUrl: URL, withCompression isCompressed: Bool = false) async throws {
+        let baseUrl = driveUrl.deletingLastPathComponent()
+        let filename = driveUrl.lastPathComponent
+        let newName = newImportedImage(at: baseUrl, filename: filename, withExtension: "qcow2")
+        let dstUrl = baseUrl.appendingPathComponent(newName)
+        try await UTMQemuImage.convert(from: driveUrl, toQcow2: dstUrl, withCompression: isCompressed)
+        do {
+            try fileManager.replaceItem(at: driveUrl, withItemAt: dstUrl, backupItemName: nil, resultingItemURL: nil)
+        } catch {
+            // on failure delete the converted file
+            try? fileManager.removeItem(at: dstUrl)
+            throw error
+        }
+    }
+    #endif
     
     // MARK: - Other utility functions
     
