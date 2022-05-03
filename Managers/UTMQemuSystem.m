@@ -493,12 +493,12 @@ static size_t sysctl_read(const char *name) {
         return; // no SPICE for console only
     }
     
-    if (self.configuration.shareClipboardEnabled || self.configuration.shareDirectoryEnabled) {
+    if (self.configuration.shareClipboardEnabled || self.configuration.shareDirectoryEnabled || self.configuration.displayFitScreen) {
         [self pushArgv:@"-device"];
         [self pushArgv:@"virtio-serial"];
     }
     
-    if (self.configuration.shareClipboardEnabled) {
+    if (self.configuration.shareClipboardEnabled || self.configuration.displayFitScreen) {
         [self pushArgv:@"-device"];
         [self pushArgv:@"virtserialport,chardev=vdagent,name=com.redhat.spice.0"];
         [self pushArgv:@"-chardev"];
@@ -611,7 +611,7 @@ static size_t sysctl_read(const char *name) {
             properties = [self appendDefaultPropertyName:@"i8042" value:@"off" toProperties:properties];
         }
     }
-    if ([target isEqualToString:@"virt"] || [target hasPrefix:@"virt-"]) {
+    if (([target isEqualToString:@"virt"] || [target hasPrefix:@"virt-"]) && ![architecture hasPrefix:@"riscv"]) {
         if (@available(macOS 12.4, iOS 15.5, *)) {
             // default highmem value is fine here
         } else {

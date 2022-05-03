@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "pins" : [
     {
       "identity" : "altkit",
@@ -7,6 +8,63 @@
       "state" : {
         "revision" : "f799f60ef6fa8b9676b4102b7dfa169fb40b6c92",
         "version" : "0.0.2"
+=======
+  "object": {
+    "pins": [
+      {
+        "package": "AltKit",
+        "repositoryURL": "https://github.com/rileytestut/AltKit.git",
+        "state": {
+          "branch": null,
+          "revision": "f799f60ef6fa8b9676b4102b7dfa169fb40b6c92",
+          "version": "0.0.2"
+        }
+      },
+      {
+        "package": "CocoaSpice",
+        "repositoryURL": "https://github.com/utmapp/CocoaSpice.git",
+        "state": {
+          "branch": "main",
+          "revision": "52cf3be92500e55809e4709de55d8f955e36fba2",
+          "version": null
+        }
+      },
+      {
+        "package": "IQKeyboardManagerSwift",
+        "repositoryURL": "https://github.com/hackiftekhar/IQKeyboardManager.git",
+        "state": {
+          "branch": null,
+          "revision": "4dc6bc7d1c9747bd0c261c8c055903f9fdef91f7",
+          "version": "6.5.6"
+        }
+      },
+      {
+        "package": "swift-log",
+        "repositoryURL": "https://github.com/apple/swift-log",
+        "state": {
+          "branch": null,
+          "revision": "5d66f7ba25daf4f94100e7022febf3c75e37a6c7",
+          "version": "1.4.2"
+        }
+      },
+      {
+        "package": "SwiftTerm",
+        "repositoryURL": "https://github.com/migueldeicaza/SwiftTerm.git",
+        "state": {
+          "branch": null,
+          "revision": "70a3af884c24dff9f1beeda04e889b5591f04f3c",
+          "version": "1.0.7"
+        }
+      },
+      {
+        "package": "ZIPFoundation",
+        "repositoryURL": "https://github.com/weichsel/ZIPFoundation.git",
+        "state": {
+          "branch": null,
+          "revision": "7254c74b49cec2cb81520523ba993c671f71b066",
+          "version": "0.9.14"
+        }
+>>>>>>> f6841ebd0cb3f6bd2f10bdcc7728856f56e972b9
       }
     },
     {
